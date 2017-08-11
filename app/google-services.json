@@ -1,0 +1,42 @@
+{
+  "project_info": {
+    "project_number": "25470826550",
+    "firebase_url": "https://tech-shots.firebaseio.com",
+    "project_id": "tech-shots",
+    "storage_bucket": "tech-shots.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:25470826550:android:f28f738f93361cfe",
+        "android_client_info": {
+          "package_name": "techshots.craftystudio.technology.app.techshots"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "25470826550-p4hmodvel18mnop78jimvousk5m4lm6j.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCIn8Axukgc5A07DPs8DReVq9jswYKRSN8"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
