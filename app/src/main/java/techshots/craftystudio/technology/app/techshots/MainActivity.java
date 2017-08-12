@@ -1,6 +1,8 @@
 package techshots.craftystudio.technology.app.techshots;
 
+import android.net.Uri;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
@@ -8,6 +10,7 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.support.design.widget.NavigationView;
@@ -18,8 +21,15 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.Toast;
+
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.dynamiclinks.FirebaseDynamicLinks;
+import com.google.firebase.dynamiclinks.PendingDynamicLinkData;
 
 import java.util.ArrayList;
+import java.util.Collections;
 
 import utils.FirebaseHandler;
 import utils.NewsArticle;
@@ -31,7 +41,10 @@ public class MainActivity extends AppCompatActivity
     private ViewPager mPager;
     private PagerAdapter mPagerAdapter;
 
-    ArrayList<NewsArticle> newsArticleArrayList ;
+    boolean isMoreArticleAvailable = true;
+    int articleFetchLimit = 5;
+
+    ArrayList<NewsArticle> newsArticleArrayList = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,21 +55,58 @@ public class MainActivity extends AppCompatActivity
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
-            this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
+                this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
         drawer.setDrawerListener(toggle);
         toggle.syncState();
 
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
 
-        downloadNewsArticle();
 
         mPager = (ViewPager) findViewById(R.id.mainActivity_viewPager);
+        initializeViewPager();
+        openDynamicLink();
+
+    }
+
+    private void openDynamicLink() {
+        FirebaseDynamicLinks.getInstance()
+                .getDynamicLink(getIntent())
+                .addOnSuccessListener(this, new OnSuccessListener<PendingDynamicLinkData>() {
+                    @Override
+                    public void onSuccess(PendingDynamicLinkData pendingDynamicLinkData) {
+                        // Get deep link from result (may be null if no link is found)
+                        Uri deepLink = null;
+                        if (pendingDynamicLinkData != null) {
+                            deepLink = pendingDynamicLinkData.getLink();
+                            Log.d("DeepLink", "onSuccess: " + deepLink);
+
+                            String newsArticleID = deepLink.getQueryParameter("shotID");
+                            Toast.makeText(MainActivity.this, "newsArticle id " + newsArticleID, Toast.LENGTH_SHORT).show();
+
+                            downloadNewsArticle(newsArticleID);
+
+                        } else {
+                            Log.d("DeepLink", "onSuccess: ");
+
+                            downloadNewsArticle();
+                        }
 
 
+                        // Handle the deep link. For example, open the linked
+                        // content, or apply promotional credit to the user's
+                        // account.
+                        // ...
 
-
-
+                        // ...
+                    }
+                })
+                .addOnFailureListener(this, new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                        Log.w("DeepLink", "getDynamicLink:onFailure", e);
+                    }
+                });
     }
 
 
@@ -118,16 +168,18 @@ public class MainActivity extends AppCompatActivity
     }
 
 
-
     private void downloadNewsArticle() {
-        new FirebaseHandler().downloadNewsArticleList(20, new FirebaseHandler.OnNewsArticleListener() {
+        new FirebaseHandler().downloadNewsArticleList(articleFetchLimit, new FirebaseHandler.OnNewsArticleListener() {
             @Override
             public void onNewsArticleList(ArrayList<NewsArticle> newsArticleArrayList, boolean isSuccessful) {
-                if (isSuccessful){
+                if (isSuccessful) {
 
-                    MainActivity.this.newsArticleArrayList =newsArticleArrayList;
-                    initializeViewPager();
 
+                    for (NewsArticle newsArticle : newsArticleArrayList) {
+                        MainActivity.this.newsArticleArrayList.add(newsArticle);
+                    }
+
+                    mPagerAdapter.notifyDataSetChanged();
 
                 }
 
@@ -140,7 +192,55 @@ public class MainActivity extends AppCompatActivity
         });
     }
 
+    private void downloadNewsArticle(String newsArticleID) {
 
+        final FirebaseHandler firebaseHandler = new FirebaseHandler();
+
+
+        firebaseHandler.downloadNewsArticle(newsArticleID, new FirebaseHandler.OnNewsArticleListener() {
+            @Override
+            public void onNewsArticleList(ArrayList<NewsArticle> newsArticleArrayList, boolean isSuccessful) {
+
+            }
+
+            @Override
+            public void onNewsArticle(NewsArticle newsArticle, boolean isSuccessful) {
+                if (isSuccessful) {
+                    newsArticleArrayList.add(newsArticle);
+                    mPagerAdapter.notifyDataSetChanged();
+                }
+                downloadNewsArticle();
+            }
+        });
+
+
+    }
+
+    private void downloadMoreNewsArticle() {
+
+
+        new FirebaseHandler().downloadNewsArticleList(articleFetchLimit, newsArticleArrayList.get(newsArticleArrayList.size() - 1).getNewsArticleID(), new FirebaseHandler.OnNewsArticleListener() {
+            @Override
+            public void onNewsArticleList(ArrayList<NewsArticle> newsArticleArrayList, boolean isSuccessful) {
+
+                for (NewsArticle newsArticle : newsArticleArrayList) {
+                    MainActivity.this.newsArticleArrayList.add(newsArticle);
+                }
+                mPagerAdapter.notifyDataSetChanged();
+
+                if (articleFetchLimit - newsArticleArrayList.size() > 4) {
+                    isMoreArticleAvailable = false;
+                }
+
+            }
+
+            @Override
+            public void onNewsArticle(NewsArticle newsArticle, boolean isSuccessful) {
+
+            }
+        });
+
+    }
 
 
     private void initializeViewPager() {
@@ -162,7 +262,9 @@ public class MainActivity extends AppCompatActivity
 
         @Override
         public Fragment getItem(int position) {
-            return NewsArticleFragment.newInstance( newsArticleArrayList.get(position));
+
+            return NewsArticleFragment.newInstance(newsArticleArrayList.get(position));
+
         }
 
         @Override
@@ -170,8 +272,6 @@ public class MainActivity extends AppCompatActivity
             return newsArticleArrayList.size();
         }
     }
-
-
 
 
 }

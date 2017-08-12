@@ -25,6 +25,8 @@ import com.google.firebase.dynamiclinks.ShortDynamicLink;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
+import utils.FirebaseHandler;
+import utils.Like;
 import utils.NewsArticle;
 
 
@@ -37,7 +39,7 @@ import utils.NewsArticle;
  * create an instance of this fragment.
  */
 public class NewsArticleFragment extends Fragment {
- private  NewsArticle newsArticle;
+    private NewsArticle newsArticle;
 
     private OnFragmentInteractionListener mListener;
 
@@ -52,7 +54,7 @@ public class NewsArticleFragment extends Fragment {
      * @return A new instance of fragment NewsArticleFragment.
      */
     // TODO: Rename and change types and number of parameters
-    public static NewsArticleFragment newInstance( NewsArticle newsArticle) {
+    public static NewsArticleFragment newInstance(NewsArticle newsArticle) {
         NewsArticleFragment fragment = new NewsArticleFragment();
         Bundle args = new Bundle();
         args.putSerializable("newsArticle", newsArticle);
@@ -74,26 +76,25 @@ public class NewsArticleFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_news_article, container, false);
         //initializeView
 
-        TextView titleText =(TextView)view.findViewById(R.id.fragmentNewsArticle_title_textView);
+        TextView titleText = (TextView) view.findViewById(R.id.fragmentNewsArticle_title_textView);
         titleText.setText(newsArticle.getNewsArticleTitle());
         titleText.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent =new Intent(getContext() , WebActivity.class);
-                intent.putExtra("newsUrl",newsArticle.getNewsArticleSourceLink());
+                Intent intent = new Intent(getContext(), WebActivity.class);
+                intent.putExtra("newsUrl", newsArticle.getNewsArticleSourceLink());
                 startActivity(intent);
             }
         });
 
 
-        TextView textView =(TextView)view.findViewById(R.id.fragmentNewsArticle_description_textView);
+        TextView textView = (TextView) view.findViewById(R.id.fragmentNewsArticle_description_textView);
         textView.setText(newsArticle.getNewsArticleDescription());
 
 
         //show image
         ImageView imageView1 = (ImageView) view.findViewById(R.id.fragment_newsArticle_imageView);
         StorageReference storageReference = FirebaseStorage.getInstance().getReference().child("newsArticleImage/" + newsArticle.getNewsArticleID() + "/" + "main");
-
 
 
         Glide.with(this)
@@ -105,16 +106,27 @@ public class NewsArticleFragment extends Fragment {
                 .into(imageView1);
 
 
-        Button likeButton =(Button)view.findViewById(R.id.fragmentNewsArticle_like_view);
+        Button likeButton = (Button) view.findViewById(R.id.fragmentNewsArticle_like_view);
         likeButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
 
+                Like like = new Like();
+                like.setNewsArticleID(newsArticle.getNewsArticleID());
+                like.setNewsArticleTitle(newsArticle.getNewsArticleTitle());
+                new FirebaseHandler().uploadLike(like, new FirebaseHandler.OnLikeListener() {
+                    @Override
+                    public void onLikeUpload(boolean isSuccessful) {
+                        if (isSuccessful) {
+
+                        }
+                    }
+                });
             }
         });
 
 
-        Button shareButton =(Button)view.findViewById(R.id.fragmentNewsArticle_share_view);
+        Button shareButton = (Button) view.findViewById(R.id.fragmentNewsArticle_share_view);
         shareButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -128,8 +140,8 @@ public class NewsArticleFragment extends Fragment {
 
     private void onShareClick() {
 
-        Task<ShortDynamicLink> shortLinkTask  = FirebaseDynamicLinks.getInstance().createDynamicLink()
-                .setLink(Uri.parse("https://goo.gl/Ae4Mhw?shotID=123"))
+        Task<ShortDynamicLink> shortLinkTask = FirebaseDynamicLinks.getInstance().createDynamicLink()
+                .setLink(Uri.parse("https://goo.gl/Ae4Mhw?shotID=" + newsArticle.getNewsArticleID()))
                 .setDynamicLinkDomain("te6xt.app.goo.gl")
                 .setAndroidParameters(
                         new DynamicLink.AndroidParameters.Builder("techshots.craftystudio.technology.app.techshots")
@@ -150,10 +162,10 @@ public class NewsArticleFragment extends Fragment {
                 .addOnCompleteListener(new OnCompleteListener<ShortDynamicLink>() {
                     @Override
                     public void onComplete(@NonNull Task<ShortDynamicLink> task) {
-                        if (task.isSuccessful()){
+                        if (task.isSuccessful()) {
                             Uri shortLink = task.getResult().getShortLink();
 
-                            openShareDialog(shortLink );
+                            openShareDialog(shortLink);
                         }
 
                     }
@@ -166,14 +178,14 @@ public class NewsArticleFragment extends Fragment {
 
     }
 
-    private void openShareDialog(Uri shortUrl ) {
+    private void openShareDialog(Uri shortUrl) {
         Intent sharingIntent = new Intent(android.content.Intent.ACTION_SEND);
         sharingIntent.setType("text/plain");
 
         //sharingIntent.putExtra(Intent.EXTRA_STREAM, newsMetaInfo.getNewsImageLocalPath());
 
         sharingIntent.putExtra(android.content.Intent.EXTRA_TEXT, shortUrl
-                +"\n\nshort link and flow link");
+                + "\n\nshort link and flow link");
         startActivity(Intent.createChooser(sharingIntent, "Share Editorial via"));
 
     }
