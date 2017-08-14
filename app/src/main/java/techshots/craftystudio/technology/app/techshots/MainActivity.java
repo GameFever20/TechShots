@@ -10,6 +10,7 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
+import android.support.v7.app.AppCompatDelegate;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
@@ -42,9 +43,16 @@ public class MainActivity extends AppCompatActivity
     private PagerAdapter mPagerAdapter;
 
     boolean isMoreArticleAvailable = true;
+    boolean isLoadingMore = false;
     int articleFetchLimit = 5;
 
     ArrayList<NewsArticle> newsArticleArrayList = new ArrayList<>();
+
+
+    static {
+        AppCompatDelegate.setDefaultNightMode(
+                AppCompatDelegate.MODE_NIGHT_AUTO);
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -66,6 +74,7 @@ public class MainActivity extends AppCompatActivity
         mPager = (ViewPager) findViewById(R.id.mainActivity_viewPager);
         initializeViewPager();
         openDynamicLink();
+
 
     }
 
@@ -105,6 +114,7 @@ public class MainActivity extends AppCompatActivity
                     @Override
                     public void onFailure(@NonNull Exception e) {
                         Log.w("DeepLink", "getDynamicLink:onFailure", e);
+
                     }
                 });
     }
@@ -219,7 +229,7 @@ public class MainActivity extends AppCompatActivity
     private void downloadMoreNewsArticle() {
 
 
-        new FirebaseHandler().downloadNewsArticleList(articleFetchLimit, newsArticleArrayList.get(newsArticleArrayList.size() - 1).getNewsArticleID(), new FirebaseHandler.OnNewsArticleListener() {
+        new FirebaseHandler().downloadNewsArticleList(articleFetchLimit, newsArticleArrayList.get(newsArticleArrayList.size()-1).getNewsArticleID(), new FirebaseHandler.OnNewsArticleListener() {
             @Override
             public void onNewsArticleList(ArrayList<NewsArticle> newsArticleArrayList, boolean isSuccessful) {
 
@@ -231,6 +241,7 @@ public class MainActivity extends AppCompatActivity
                 if (articleFetchLimit - newsArticleArrayList.size() > 4) {
                     isMoreArticleAvailable = false;
                 }
+                isLoadingMore = false;
 
             }
 
@@ -263,6 +274,9 @@ public class MainActivity extends AppCompatActivity
         @Override
         public Fragment getItem(int position) {
 
+            if (position == newsArticleArrayList.size() - 3 && !isLoadingMore) {
+                downloadMoreNewsArticle();
+            }
             return NewsArticleFragment.newInstance(newsArticleArrayList.get(position));
 
         }

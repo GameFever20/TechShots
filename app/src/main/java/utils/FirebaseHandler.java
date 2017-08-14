@@ -93,7 +93,7 @@ public class FirebaseHandler {
     public void downloadNewsArticleList(int limitTo, String lastNewsArticleID, final OnNewsArticleListener onNewsArticleListener) {
         DatabaseReference myRef = mDatabase.getReference().child("newsArticle/");
 
-        Query myref2 = myRef.limitToLast(limitTo).endAt(lastNewsArticleID);
+        Query myref2 = myRef.orderByKey().limitToLast(limitTo).endAt(lastNewsArticleID);
         myref2.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
