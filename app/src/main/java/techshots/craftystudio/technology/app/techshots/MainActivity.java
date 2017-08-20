@@ -1,7 +1,9 @@
 package techshots.craftystudio.technology.app.techshots;
 
+import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
@@ -24,14 +26,20 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Toast;
 
+import com.google.android.gms.ads.AdListener;
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.InterstitialAd;
+import com.google.android.gms.ads.MobileAds;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.dynamiclinks.FirebaseDynamicLinks;
 import com.google.firebase.dynamiclinks.PendingDynamicLinkData;
+import com.google.firebase.messaging.FirebaseMessaging;
 
 import java.util.ArrayList;
 import java.util.Collections;
 
+import utils.AppRater;
 import utils.FirebaseHandler;
 import utils.NewsArticle;
 import utils.ZoomOutPageTransformer;
@@ -46,18 +54,34 @@ public class MainActivity extends AppCompatActivity
     boolean isLoadingMore = false;
     int articleFetchLimit = 5;
 
+    int adShowCounter;
+
+    InterstitialAd mInterstitialAd;
+
     ArrayList<NewsArticle> newsArticleArrayList = new ArrayList<>();
 
+    boolean isSplashScreen =true ;
 
-    static {
-        AppCompatDelegate.setDefaultNightMode(
-                AppCompatDelegate.MODE_NIGHT_AUTO);
-    }
+
+
+
+    private boolean pendingInterstitialAd;
+    private Handler handler;
+    private Runnable runnable;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        openDynamicLink();
+
+        setContentView(R.layout.splash_main);
+
+    }
+
+    public void initializeActivity(){
         setContentView(R.layout.activity_main);
+
+        isSplashScreen =false;
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
@@ -73,8 +97,65 @@ public class MainActivity extends AppCompatActivity
 
         mPager = (ViewPager) findViewById(R.id.mainActivity_viewPager);
         initializeViewPager();
-        openDynamicLink();
 
+
+        FirebaseMessaging.getInstance().subscribeToTopic("subscribed");
+
+        MobileAds.initialize(this, "ca-app-pub-8455191357100024~6634740792");
+
+        initialiseInterstitialAds();
+
+        AppRater.app_launched(this);
+    }
+
+    private void initialiseInterstitialAds() {
+
+        mInterstitialAd = new InterstitialAd(this);
+        mInterstitialAd.setAdUnitId("ca-app-pub-3940256099942544/1033173712");
+        mInterstitialAd.loadAd(new AdRequest.Builder().build());
+
+        interstitialAdTimer(45000);
+
+        mInterstitialAd.setAdListener(new AdListener() {
+            @Override
+            public void onAdClosed() {
+                super.onAdClosed();
+                mInterstitialAd.loadAd(new AdRequest.Builder().build());
+                interstitialAdTimer(45000);
+
+            }
+
+            @Override
+            public void onAdFailedToLoad(int i) {
+                super.onAdFailedToLoad(i);
+            }
+
+            @Override
+            public void onAdLeftApplication() {
+                super.onAdLeftApplication();
+            }
+
+            @Override
+            public void onAdOpened() {
+                super.onAdOpened();
+                adShowCounter = 0;
+            }
+
+            @Override
+            public void onAdLoaded() {
+                super.onAdLoaded();
+            }
+
+            @Override
+            public void onAdClicked() {
+                super.onAdClicked();
+            }
+
+            @Override
+            public void onAdImpression() {
+                super.onAdImpression();
+            }
+        });
 
     }
 
@@ -91,14 +172,24 @@ public class MainActivity extends AppCompatActivity
                             Log.d("DeepLink", "onSuccess: " + deepLink);
 
                             String newsArticleID = deepLink.getQueryParameter("shotID");
-                            Toast.makeText(MainActivity.this, "newsArticle id " + newsArticleID, Toast.LENGTH_SHORT).show();
+                            //Toast.makeText(MainActivity.this, "newsArticle id " + newsArticleID, Toast.LENGTH_SHORT).show();
 
                             downloadNewsArticle(newsArticleID);
 
                         } else {
                             Log.d("DeepLink", "onSuccess: ");
+                            try {
+                                String newsArticleID = getIntent().getStringExtra("newsArticleID");
+                                if (newsArticleID != null) {
+                                    downloadNewsArticle(newsArticleID);
+                                } else {
+                                    downloadNewsArticle();
+                                }
+                            } catch (Exception e) {
+                                downloadNewsArticle();
+                            }
 
-                            downloadNewsArticle();
+
                         }
 
 
@@ -122,11 +213,13 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public void onBackPressed() {
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
-        if (drawer.isDrawerOpen(GravityCompat.START)) {
-            drawer.closeDrawer(GravityCompat.START);
-        } else {
-            super.onBackPressed();
+        if (!isSplashScreen) {
+            DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+            if (drawer.isDrawerOpen(GravityCompat.START)) {
+                drawer.closeDrawer(GravityCompat.START);
+            } else {
+                super.onBackPressed();
+            }
         }
     }
 
@@ -158,24 +251,52 @@ public class MainActivity extends AppCompatActivity
         // Handle navigation view item clicks here.
         int id = item.getItemId();
 
-        if (id == R.id.nav_camera) {
-            // Handle the camera action
-        } else if (id == R.id.nav_gallery) {
-
-        } else if (id == R.id.nav_slideshow) {
-
-        } else if (id == R.id.nav_manage) {
-
-        } else if (id == R.id.nav_share) {
-
-        } else if (id == R.id.nav_send) {
-
+        if (id == R.id.nav_share){
+            onShareClick();
+        }else if(id ==R.id.nav_suggestion){
+            onSuggestion();
+        }else if (id == R.id.nav_rate_us){
+            onRateUs();
         }
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
     }
+
+    private void onShareClick() {
+
+        int applicationNameId = this.getApplicationInfo().labelRes;
+        final String appPackageName = this.getPackageName();
+        Intent i = new Intent(Intent.ACTION_SEND);
+        i.setType("text/plain");
+        i.putExtra(Intent.EXTRA_SUBJECT, getString(applicationNameId));
+        String text = "Install Tech shots : \n";
+        String link = "https://play.google.com/store/apps/details?id=" + appPackageName;
+        i.putExtra(Intent.EXTRA_TEXT, text + "\n " + link);
+        startActivity(Intent.createChooser(i, "Share App :"));
+    }
+
+    private void onSuggestion() {
+
+        Intent emailIntent = new Intent(Intent.ACTION_SEND);
+        emailIntent.putExtra(Intent.EXTRA_EMAIL, new String[]{"acraftystudio@gmail.com"});
+        emailIntent.putExtra(Intent.EXTRA_SUBJECT, "Suggestion From Tech shots ");
+        emailIntent.setType("text/plain");
+
+        startActivity(Intent.createChooser(emailIntent, "Send mail From..."));
+    }
+
+    private void onRateUs() {
+
+        final String appPackageName = this.getPackageName();
+        String link = "https://play.google.com/store/apps/details?id=" + appPackageName;
+
+        startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(link)));
+
+    }
+
+
 
 
     private void downloadNewsArticle() {
@@ -189,7 +310,13 @@ public class MainActivity extends AppCompatActivity
                         MainActivity.this.newsArticleArrayList.add(newsArticle);
                     }
 
+                    if (isSplashScreen){
+                        initializeActivity();
+                    }
+
                     mPagerAdapter.notifyDataSetChanged();
+                    initializeAds(3);
+
 
                 }
 
@@ -215,11 +342,17 @@ public class MainActivity extends AppCompatActivity
 
             @Override
             public void onNewsArticle(NewsArticle newsArticle, boolean isSuccessful) {
+                if (isSplashScreen){
+                    initializeActivity();
+                    //set activity content and remove splash screen
+                }
                 if (isSuccessful) {
                     newsArticleArrayList.add(newsArticle);
                     mPagerAdapter.notifyDataSetChanged();
                 }
                 downloadNewsArticle();
+
+
             }
         });
 
@@ -229,19 +362,26 @@ public class MainActivity extends AppCompatActivity
     private void downloadMoreNewsArticle() {
 
 
-        new FirebaseHandler().downloadNewsArticleList(articleFetchLimit, newsArticleArrayList.get(newsArticleArrayList.size()-1).getNewsArticleID(), new FirebaseHandler.OnNewsArticleListener() {
+        new FirebaseHandler().downloadNewsArticleList(articleFetchLimit, newsArticleArrayList.get(newsArticleArrayList.size() - 1).getNewsArticleID(), new FirebaseHandler.OnNewsArticleListener() {
             @Override
             public void onNewsArticleList(ArrayList<NewsArticle> newsArticleArrayList, boolean isSuccessful) {
 
                 for (NewsArticle newsArticle : newsArticleArrayList) {
                     MainActivity.this.newsArticleArrayList.add(newsArticle);
                 }
+
+                if (isSplashScreen){
+                    initializeActivity();
+                }
+
                 mPagerAdapter.notifyDataSetChanged();
 
                 if (articleFetchLimit - newsArticleArrayList.size() > 4) {
                     isMoreArticleAvailable = false;
                 }
                 isLoadingMore = false;
+
+                initializeAds(3);
 
             }
 
@@ -263,6 +403,78 @@ public class MainActivity extends AppCompatActivity
         mPager.setPageTransformer(true, new ZoomOutPageTransformer());
 
 
+        mPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
+            @Override
+            public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+
+            }
+
+            @Override
+            public void onPageSelected(int position) {
+
+                checkInterstitialAd();
+            }
+
+            @Override
+            public void onPageScrollStateChanged(int state) {
+
+            }
+        });
+
+    }
+
+    private void checkInterstitialAd() {
+        if (adShowCounter > 5 && pendingInterstitialAd) {
+
+            if (mInterstitialAd.isLoaded()) {
+                mInterstitialAd.show();
+            } else {
+                mInterstitialAd.loadAd(new AdRequest.Builder().build());
+            }
+        }
+    }
+
+    public void interstitialAdTimer(long waitTill) {
+        pendingInterstitialAd = false;
+
+        handler = new Handler();
+        runnable = new Runnable() {
+            @Override
+            public void run() {
+                pendingInterstitialAd = true;
+            }
+        };
+
+
+        handler.removeCallbacks(runnable);
+        handler.postDelayed(runnable, waitTill);
+
+
+    }
+
+    private void initializeAds(int count) {
+
+       /* int x = 0;
+        for (int i = 0; i < newsArticleArrayList.size(); i++) {
+            x++;
+
+            NewsArticle newsArticle =newsArticleArrayList.get(i);
+
+            if (newsArticle.isAdsView()){
+                x=0;
+            }
+
+            if (x == count) {
+                NewsArticle adNewsArticle = new NewsArticle();
+                adNewsArticle.setAdsView(true);
+                newsArticleArrayList.add(i, adNewsArticle);
+
+            }
+
+        }
+
+
+        mPagerAdapter.notifyDataSetChanged();*/
     }
 
 
@@ -274,10 +486,18 @@ public class MainActivity extends AppCompatActivity
         @Override
         public Fragment getItem(int position) {
 
+            adShowCounter++;
+
             if (position == newsArticleArrayList.size() - 3 && !isLoadingMore) {
                 downloadMoreNewsArticle();
             }
-            return NewsArticleFragment.newInstance(newsArticleArrayList.get(position));
+            NewsArticle newsArticle = newsArticleArrayList.get(position);
+            if (newsArticle.isAdsView()) {
+                return AdsFragment.newInstance("", "");
+            } else {
+                return NewsArticleFragment.newInstance(newsArticle);
+            }
+
 
         }
 

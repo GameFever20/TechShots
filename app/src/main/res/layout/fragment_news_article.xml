@@ -9,7 +9,7 @@
     <android.support.v7.widget.CardView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        app:cardBackgroundColor="#DDDDDD"
+        app:cardBackgroundColor="#ffffff"
         app:cardCornerRadius="4dp">
 
         <LinearLayout
@@ -22,8 +22,7 @@
                 android:id="@+id/fragment_newsArticle_imageView"
                 android:layout_width="match_parent"
                 android:layout_height="250dp"
-                android:scaleType="fitCenter">
-
+                android:scaleType="centerCrop">
 
             </ImageView>
 
@@ -32,74 +31,139 @@
                 android:id="@+id/fragmentNewsArticle_title_textView"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="8dp"
                 android:layout_marginLeft="16dp"
                 android:layout_marginRight="16dp"
-                android:layout_marginTop="8dp"
+                android:layout_marginTop="4dp"
                 android:fontFamily="serif"
                 android:text="Title"
                 android:textAlignment="center"
-                android:textSize="20sp"
+                android:textColor="@color/colorPrimary"
+                android:textSize="18sp"
                 android:textStyle="bold" />
 
-            <TextView
-                android:id="@+id/fragmentNewsArticle_description_textView"
+
+            <ScrollView
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="8dp"
+                android:layout_height="0dp"
+                android:layout_marginBottom="4dp"
                 android:layout_marginLeft="16dp"
                 android:layout_marginRight="16dp"
-                android:layout_marginTop="8dp"
-                android:layout_weight="1"
-                android:lineSpacingMultiplier="1.3"
-                android:text="Description"
-                android:textSize="16sp"
-                android:textStyle="italic" />
+                android:layout_marginTop="4dp"
+                android:layout_weight="1">
 
-            <ImageView
-                android:layout_width="12dp"
-                android:layout_height="12dp"
-                android:layout_gravity="center" />
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
 
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Read full news"
-                android:textAlignment="center"
-                android:textSize="12sp" />
+
+                    <TextView
+                        android:id="@+id/fragmentNewsArticle_description_textView"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="serif"
+                        android:text="Description"
+                        android:autoLink="web"
+                        android:textColor="#0d0d0d"
+                        android:textSize="14sp" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="4dp"
+                        android:layout_marginLeft="0dp"
+                        android:layout_marginRight="4dp"
+                        android:layout_marginTop="4dp"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Full Story"
+                            android:textSize="12sp" />
+
+                        <TextView
+                            android:id="@+id/fragmentNewsArticle_source_textView"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginLeft="4dp"
+                            android:layout_marginStart="4dp"
+                            android:layout_weight="1"
+                            android:text="GSM arena"
+                            android:textSize="14sp" />
+
+                        <TextView
+                            android:id="@+id/fragmentNewsArticle_time_textView"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center_vertical"
+                            android:text="Time"
+                            android:textSize="12sp" />
+                    </LinearLayout>
+
+                </LinearLayout>
+
+            </ScrollView>
 
 
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content">
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
+                android:layout_marginLeft="12dp"
+                android:layout_marginRight="12dp"
+                android:layout_marginTop="4dp"
+                android:orientation="horizontal">
 
-                <Button
-                    android:layout_width="wrap_content"
+
+                <com.sackcentury.shinebuttonlib.ShineButton
+                    android:id="@+id/fragmentNewsArticle_like_ShineButton"
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:layout_centerInParent="true"
+                    android:src="@android:color/darker_gray"
+                    app:allow_random_color="true"
+                    app:big_shine_color="#FF6666"
+                    app:btn_color="@android:color/darker_gray"
+                    app:btn_fill_color="#FF6666"
+                    app:click_animation_duration="500"
+                    app:enable_flashing="false"
+                    app:shine_animation_duration="2000"
+                    app:shine_count="8"
+                    app:shine_turn_angle="10"
+                    app:siShape="@raw/like"
+                    app:small_shine_color="#CC9999"
+                    app:small_shine_offset_angle="20" />
+
+                <TextView
+                    android:id="@+id/fragmentNewsArticle_like_textView"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:text="views"
+                    android:layout_gravity="center_vertical"
+                    android:layout_marginLeft="12dp"
                     android:layout_weight="1"
-                    />
+                    android:text=""
+                    android:textSize="16sp" />
 
 
-                <Button
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Likes"
-                    android:layout_weight="1"
-                    android:id="@+id/fragmentNewsArticle_like_view"
-
-                    />
-
-
-                <Button
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Share"
-                    android:layout_weight="1"
-                    android:id="@+id/fragmentNewsArticle_share_view"
-
-                    />
-
+                <com.sackcentury.shinebuttonlib.ShineButton
+                    android:id="@+id/fragmentNewsArticle_share_ShineButton"
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:layout_centerInParent="true"
+                    android:src="@android:color/darker_gray"
+                    app:allow_random_color="true"
+                    app:big_shine_color="#FF6666"
+                    app:btn_color="@android:color/darker_gray"
+                    app:btn_fill_color="#FF6666"
+                    app:click_animation_duration="500"
+                    app:enable_flashing="false"
+                    app:shine_animation_duration="2000"
+                    app:shine_count="8"
+                    app:shine_turn_angle="10"
+                    app:siShape="@drawable/ic_menu_share"
+                    app:small_shine_color="#CC9999"
+                    app:small_shine_offset_angle="20" />
 
 
             </LinearLayout>

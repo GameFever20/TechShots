@@ -15,6 +15,8 @@ import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Created by bunny on 09/08/17.
@@ -141,6 +143,37 @@ public class FirebaseHandler {
             }
         });
 
+
+    }
+
+    public void uploadLike(NewsArticle newsArticle , final OnLikeListener onLikeListener){
+
+
+        DatabaseReference ref = mDatabase.getReference();
+
+
+// Create the data we want to update
+        Map post = new HashMap();
+
+        post.put("newsArticle/"+newsArticle.getNewsArticleID()+"/isPushNotification" ,false);
+
+        post.put("newsArticle/"+newsArticle.getNewsArticleID()+"/newsLikes" ,newsArticle.getNewsLikes());
+
+
+
+// Do a deep-path update
+        ref.updateChildren(post).addOnCompleteListener(new OnCompleteListener<Void>() {
+            @Override
+            public void onComplete(@NonNull Task<Void> task) {
+onLikeListener.onLikeUpload(true);
+            }
+        }).addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception e) {
+
+                onLikeListener.onLikeUpload(false);
+            }
+        });
 
     }
 

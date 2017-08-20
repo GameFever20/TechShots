@@ -1,6 +1,7 @@
 package utils;
 
 import java.io.Serializable;
+import java.util.Calendar;
 
 /**
  * Created by bunny on 09/08/17.
@@ -12,6 +13,7 @@ public class NewsArticle implements Serializable {
 
     int companyIndex ,newsCategoryIndex ,newsViews ,newsLikes ;
     long timeInMillis ;
+    boolean adsView =false;
 
 
     public NewsArticle() {
@@ -135,5 +137,65 @@ public class NewsArticle implements Serializable {
 
     public void setNewsLikes(int newsLikes) {
         this.newsLikes = newsLikes;
+    }
+
+    public boolean isAdsView() {
+        return adsView;
+    }
+
+    public void setAdsView(boolean adsView) {
+        this.adsView = adsView;
+    }
+
+
+    public String resolveTime(){
+        Calendar calendar = Calendar.getInstance();
+
+
+        long currenttime = calendar.getTimeInMillis();
+
+
+        //calculate difference in time
+        //long timeDifference = (currenttime - newsTime);
+
+        if ((currenttime - timeInMillis) <= 0 || timeInMillis <= 1493013649175l) {
+            return "";
+        }
+
+        long numberOfHour = (currenttime - timeInMillis) / 3600000;
+        if (numberOfHour == 0) {
+            return "now";
+        } else if (numberOfHour < 24) {
+            return String.valueOf(numberOfHour) + " hour ago";
+        } else {
+
+            long numberOfDays = numberOfHour / 24;
+
+            if (numberOfDays < 7) {
+                return String.valueOf(numberOfDays) + " day ago";
+            } else {
+
+                long numberOfWeek = numberOfDays / 7;
+                if (numberOfWeek <= 4) {
+                    return String.valueOf(numberOfWeek) + " week ago";
+                } else {
+
+                    long numberOfMonth = numberOfWeek / 4;
+                    if (numberOfMonth <= 12) {
+                        return String.valueOf(numberOfMonth) + " month ago";
+                    } else {
+
+                        long numberOfYear = numberOfMonth / 12;
+
+                        return String.valueOf(numberOfYear) + " year ago";
+
+                    }
+
+                }
+
+            }
+
+        }
+
     }
 }

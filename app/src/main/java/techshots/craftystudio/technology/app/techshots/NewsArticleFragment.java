@@ -1,5 +1,6 @@
 package techshots.craftystudio.technology.app.techshots;
 
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
@@ -12,6 +13,7 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
@@ -24,6 +26,7 @@ import com.google.firebase.dynamiclinks.FirebaseDynamicLinks;
 import com.google.firebase.dynamiclinks.ShortDynamicLink;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
+import com.sackcentury.shinebuttonlib.ShineButton;
 
 import utils.FirebaseHandler;
 import utils.Like;
@@ -81,9 +84,7 @@ public class NewsArticleFragment extends Fragment {
         titleText.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(getContext(), WebActivity.class);
-                intent.putExtra("newsUrl", newsArticle.getNewsArticleSourceLink());
-                startActivity(intent);
+                openSourceLink();
             }
         });
 
@@ -106,51 +107,87 @@ public class NewsArticleFragment extends Fragment {
                 .into(imageView1);
 
 
-        Button likeButton = (Button) view.findViewById(R.id.fragmentNewsArticle_like_view);
-        likeButton.setOnClickListener(new View.OnClickListener() {
+        final TextView liketextView = (TextView) view.findViewById(R.id.fragmentNewsArticle_like_textView);
+        liketextView.setText(newsArticle.getNewsLikes() + " Likes");
+
+        final ShineButton likeShineButton = (ShineButton) view.findViewById(R.id.fragmentNewsArticle_like_ShineButton);
+        likeShineButton.setOnCheckStateChangeListener(new ShineButton.OnCheckedChangeListener() {
             @Override
-            public void onClick(View v) {
+            public void onCheckedChanged(View view, boolean checked) {
+                if (checked) {
+                    likeShineButton.setActivated(false);
+                    Like like = new Like();
+                    like.setNewsArticleID(newsArticle.getNewsArticleID());
+                    like.setNewsArticleTitle(newsArticle.getNewsArticleTitle());
+                    newsArticle.setNewsLikes(newsArticle.getNewsLikes() + 1);
 
-                Like like = new Like();
-                like.setNewsArticleID(newsArticle.getNewsArticleID());
-                like.setNewsArticleTitle(newsArticle.getNewsArticleTitle());
-                new FirebaseHandler().uploadLike(like, new FirebaseHandler.OnLikeListener() {
-                    @Override
-                    public void onLikeUpload(boolean isSuccessful) {
-                        if (isSuccessful) {
+                    new FirebaseHandler().uploadLike(like, new FirebaseHandler.OnLikeListener() {
+                        @Override
+                        public void onLikeUpload(boolean isSuccessful) {
+                            if (isSuccessful) {
+                                //Toast.makeText(getContext(), "Thankyou for liking article", Toast.LENGTH_SHORT).show();
 
+                                liketextView.setText(newsArticle.getNewsLikes() + " Likes");
+
+                            }
                         }
-                    }
-                });
+                    });
+                }
             }
         });
 
 
-        Button shareButton = (Button) view.findViewById(R.id.fragmentNewsArticle_share_view);
-        shareButton.setOnClickListener(new View.OnClickListener() {
+        ShineButton shareShineButton = (ShineButton) view.findViewById(R.id.fragmentNewsArticle_share_ShineButton);
+        shareShineButton.setOnCheckStateChangeListener(new ShineButton.OnCheckedChangeListener() {
             @Override
-            public void onClick(View v) {
-
+            public void onCheckedChanged(View view, boolean checked) {
                 onShareClick();
             }
         });
 
+
+        textView = (TextView) view.findViewById(R.id.fragmentNewsArticle_source_textView);
+        textView.setText(newsArticle.getNewsArticleSource());
+        textView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                openSourceLink();
+            }
+        });
+
+        textView = (TextView) view.findViewById(R.id.fragmentNewsArticle_time_textView);
+        textView.setText(newsArticle.resolveTime());
+
         return view;
     }
 
+    private void openSourceLink() {
+        /*Intent intent = new Intent(getContext(), WebActivity.class);
+        intent.putExtra("newsUrl", newsArticle.getNewsArticleSourceLink());
+        startActivity(intent);*/
+        try {
+            startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(newsArticle.getNewsArticleSourceLink())));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
     private void onShareClick() {
+        final ProgressDialog pd = new ProgressDialog(getContext());
+        pd.setMessage("Creating link ...");
+        pd.show();
 
         Task<ShortDynamicLink> shortLinkTask = FirebaseDynamicLinks.getInstance().createDynamicLink()
-                .setLink(Uri.parse("https://goo.gl/Ae4Mhw?shotID=" + newsArticle.getNewsArticleID()))
+                .setLink(Uri.parse("https://goo.gl/hwhfiP?shotID=" + newsArticle.getNewsArticleID()))
                 .setDynamicLinkDomain("te6xt.app.goo.gl")
                 .setAndroidParameters(
                         new DynamicLink.AndroidParameters.Builder("techshots.craftystudio.technology.app.techshots")
                                 .build())
                 .setSocialMetaTagParameters(
                         new DynamicLink.SocialMetaTagParameters.Builder()
-                                .setTitle("Example of a Dynamic Link")
-                                .setDescription("This link works whether the app is installed or not!")
-                                .setImageUrl(Uri.parse("https://play.google.com/store/apps/details?id=app.craftystudio.vocabulary.dailyeditorial"))
+                                .setTitle(newsArticle.getNewsArticleTitle())
+                                .setDescription("Tech Shots")
+                                .setImageUrl(Uri.parse(newsArticle.getNewsArticleImageLink()))
                                 .build())
                 .setGoogleAnalyticsParameters(
                         new DynamicLink.GoogleAnalyticsParameters.Builder()
@@ -166,13 +203,15 @@ public class NewsArticleFragment extends Fragment {
                             Uri shortLink = task.getResult().getShortLink();
 
                             openShareDialog(shortLink);
+
                         }
+                        pd.dismiss();
 
                     }
                 }).addOnFailureListener(new OnFailureListener() {
                     @Override
                     public void onFailure(@NonNull Exception e) {
-
+                        pd.dismiss();
                     }
                 });
 
@@ -185,8 +224,9 @@ public class NewsArticleFragment extends Fragment {
         //sharingIntent.putExtra(Intent.EXTRA_STREAM, newsMetaInfo.getNewsImageLocalPath());
 
         sharingIntent.putExtra(android.content.Intent.EXTRA_TEXT, shortUrl
-                + "\n\nshort link and flow link");
+                + "\n Tech shots :Tech news in short");
         startActivity(Intent.createChooser(sharingIntent, "Share Editorial via"));
+
 
     }
 

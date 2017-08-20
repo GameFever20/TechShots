@@ -1,0 +1,25 @@
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:ads="http://schemas.android.com/apk/res-auto"
+    tools:context="techshots.craftystudio.technology.app.techshots.AdsFragment">
+
+    <!--<com.google.android.gms.ads.NativeExpressAdView
+        android:id="@+id/adsFragment_adView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        >
+    </com.google.android.gms.ads.NativeExpressAdView>
+-->
+
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:id="@+id/adFragment_linearLayout"
+        android:layout_height="match_parent">
+
+
+    </LinearLayout>
+
+</FrameLayout>
