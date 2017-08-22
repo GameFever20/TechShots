@@ -26,6 +26,9 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Toast;
 
+import com.crashlytics.android.Crashlytics;
+import com.crashlytics.android.answers.Answers;
+import com.crashlytics.android.answers.InviteEvent;
 import com.google.android.gms.ads.AdListener;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.InterstitialAd;
@@ -36,6 +39,7 @@ import com.google.firebase.dynamiclinks.FirebaseDynamicLinks;
 import com.google.firebase.dynamiclinks.PendingDynamicLinkData;
 import com.google.firebase.messaging.FirebaseMessaging;
 
+import io.fabric.sdk.android.Fabric;
 import java.util.ArrayList;
 import java.util.Collections;
 
@@ -72,6 +76,7 @@ public class MainActivity extends AppCompatActivity
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Fabric.with(this, new Crashlytics());
         openDynamicLink();
 
         setContentView(R.layout.splash_main);
@@ -111,7 +116,7 @@ public class MainActivity extends AppCompatActivity
     private void initialiseInterstitialAds() {
 
         mInterstitialAd = new InterstitialAd(this);
-        mInterstitialAd.setAdUnitId("ca-app-pub-3940256099942544/1033173712");
+        mInterstitialAd.setAdUnitId("ca-app-pub-8455191357100024/8786553020");
         mInterstitialAd.loadAd(new AdRequest.Builder().build());
 
         interstitialAdTimer(45000);
@@ -176,12 +181,25 @@ public class MainActivity extends AppCompatActivity
 
                             downloadNewsArticle(newsArticleID);
 
+                            try{
+                                Answers.getInstance().logInvite(new InviteEvent().putMethod("Daynamic link").putCustomAttribute("news Id",newsArticleID));
+                            }catch (Exception e){
+                                e.printStackTrace();
+                            }
+
                         } else {
                             Log.d("DeepLink", "onSuccess: ");
                             try {
                                 String newsArticleID = getIntent().getStringExtra("newsArticleID");
                                 if (newsArticleID != null) {
                                     downloadNewsArticle(newsArticleID);
+
+                                    try{
+                                        Answers.getInstance().logInvite(new InviteEvent().putMethod("push Notification").putCustomAttribute("news Id",newsArticleID));
+                                    }catch (Exception e){
+                                        e.printStackTrace();
+                                    }
+
                                 } else {
                                     downloadNewsArticle();
                                 }
@@ -205,6 +223,7 @@ public class MainActivity extends AppCompatActivity
                     @Override
                     public void onFailure(@NonNull Exception e) {
                         Log.w("DeepLink", "getDynamicLink:onFailure", e);
+                        downloadNewsArticle();
 
                     }
                 });

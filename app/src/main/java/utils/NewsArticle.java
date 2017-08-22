@@ -13,7 +13,7 @@ public class NewsArticle implements Serializable {
 
     int companyIndex ,newsCategoryIndex ,newsViews ,newsLikes ;
     long timeInMillis ;
-    boolean adsView =false;
+    boolean adsView =false ,pushNotification;
 
 
     public NewsArticle() {

@@ -7,6 +7,9 @@ import android.content.SharedPreferences;
 import android.net.Uri;
 import android.support.v7.app.AlertDialog;
 
+import com.crashlytics.android.answers.Answers;
+import com.crashlytics.android.answers.CustomEvent;
+
 public class AppRater {
     private final static String APP_TITLE = "Short Story Name";// App Name
     private final static String APP_PNAME = "app.story.craftystudio.shortstory";// Package Name
@@ -61,6 +64,8 @@ public class AppRater {
                             }
                             dialog.dismiss();
 
+                            Answers.getInstance().logCustom(new CustomEvent("Rating Dialogue").putCustomAttribute("Selection","OK"));
+
                             // FIRE ZE MISSILES!
                         }
                     })
@@ -72,6 +77,8 @@ public class AppRater {
                                 editor.commit();
                             }
                             dialog.dismiss();
+                            Answers.getInstance().logCustom(new CustomEvent("Rating Dialogue").putCustomAttribute("Selection","No thanks"));
+
                         }
                     })
                     .setNeutralButton("Not now", new DialogInterface.OnClickListener() {
@@ -79,9 +86,12 @@ public class AppRater {
                         public void onClick(DialogInterface dialogInterface, int i) {
                             if (editor != null) {
                                 editor.putLong("launch_count", 0);
+                                editor.commit();
 
                             }
                             dialogInterface.dismiss();
+                            Answers.getInstance().logCustom(new CustomEvent("Rating Dialogue").putCustomAttribute("Selection","Not Now"));
+
 
                         }
                     });

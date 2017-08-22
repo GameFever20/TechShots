@@ -17,6 +17,10 @@ import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.crashlytics.android.answers.Answers;
+import com.crashlytics.android.answers.ContentViewEvent;
+import com.crashlytics.android.answers.CustomEvent;
+import com.crashlytics.android.answers.ShareEvent;
 import com.firebase.ui.storage.images.FirebaseImageLoader;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
@@ -62,6 +66,8 @@ public class NewsArticleFragment extends Fragment {
         Bundle args = new Bundle();
         args.putSerializable("newsArticle", newsArticle);
         fragment.setArguments(args);
+
+
         return fragment;
     }
 
@@ -70,6 +76,13 @@ public class NewsArticleFragment extends Fragment {
         super.onCreate(savedInstanceState);
         if (getArguments() != null) {
             this.newsArticle = (NewsArticle) getArguments().getSerializable("newsArticle");
+        }
+
+        try {
+            Answers.getInstance().logContentView(new ContentViewEvent().putContentId(newsArticle.getNewsArticleID()).putContentName(newsArticle.getNewsArticleTitle()).putContentType("article"));
+
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
@@ -132,6 +145,11 @@ public class NewsArticleFragment extends Fragment {
                             }
                         }
                     });
+                    try {
+                        Answers.getInstance().logCustom(new CustomEvent("Article Like").putCustomAttribute("Title", newsArticle.getNewsArticleTitle()));
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
                 }
             }
         });
@@ -142,6 +160,11 @@ public class NewsArticleFragment extends Fragment {
             @Override
             public void onCheckedChanged(View view, boolean checked) {
                 onShareClick();
+                try {
+                    Answers.getInstance().logShare(new ShareEvent().putContentId(newsArticle.getNewsArticleTitle()));
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
         });
 
@@ -225,7 +248,8 @@ public class NewsArticleFragment extends Fragment {
 
         sharingIntent.putExtra(android.content.Intent.EXTRA_TEXT, shortUrl
                 + "\n Tech shots :Tech news in short");
-        startActivity(Intent.createChooser(sharingIntent, "Share Editorial via"));
+        startActivity(Intent.createChooser(sharingIntent, "Share Shot via"));
+
 
 
     }

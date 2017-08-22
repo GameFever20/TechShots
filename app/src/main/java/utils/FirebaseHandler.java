@@ -155,7 +155,7 @@ public class FirebaseHandler {
 // Create the data we want to update
         Map post = new HashMap();
 
-        post.put("newsArticle/"+newsArticle.getNewsArticleID()+"/isPushNotification" ,false);
+        post.put("newsArticle/"+newsArticle.getNewsArticleID()+"/pushNotification" ,false);
 
         post.put("newsArticle/"+newsArticle.getNewsArticleID()+"/newsLikes" ,newsArticle.getNewsLikes());
 
